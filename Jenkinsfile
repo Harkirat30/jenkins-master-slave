@@ -38,7 +38,8 @@ agent{
             steps{
                 script{
                     sh "gcloud container clusters get-credentials app-cluster --zone ${env.ZONE} --project ${env.PROJECT_ID}"
-                    sh 'kubectl apply -f manifests/.'
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f service.yaml'
                 }
             }
         }
