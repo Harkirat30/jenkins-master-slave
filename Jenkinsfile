@@ -34,13 +34,6 @@ agent{
                 script{
                     sh 'docker push us-central1-docker.pkg.dev/pod-x-harkirat-singh/jenkins/hello-app:${BUILD_NUMBER}'
         }}}
-        stage ("Updating Deployment Manifest") {
-            steps {
-                script {
-                    sh 'sed -i s+asia-south1-docker.pkg.dev/xx/jenkins/hello-app:v1+us-central1-docker.pkg.dev/pod-x-harkirat-singh/jenkins/hello-app:${BUILD_NUMBER}+g manifests/deployment.yaml'
-                }
-            }
-        }
         stage("Application Deployment on Google Kubernetes Engine"){
             steps{
                 script{
