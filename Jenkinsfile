@@ -1,7 +1,7 @@
 pipeline {
 agent{
     kubernetes{
-       inheritFrom 'jenkins-agent-pod'
+       inheritFrom 'jenkins-slave'
     }
 }
     environment {
@@ -20,8 +20,7 @@ agent{
                           
             }
         }
-        
-        stage("Building Application Docker Image"){
+                stage("Building Application Docker Image"){
             steps{
                 script{
                     sh 'gcloud auth configure-docker us-central1-docker.pkg.dev'
@@ -37,7 +36,7 @@ agent{
         stage("Application Deployment on Google Kubernetes Engine"){
             steps{
                 script{
-                    sh "gcloud container clusters get-credentials app-cluster --zone ${env.ZONE} --project ${env.PROJECT_ID}"
+                    sh "gcloud container clusters get-credentials primary --zone ${env.ZONE} --project ${env.PROJECT_ID}"
                     sh 'kubectl apply -f deployment.yaml'
                     sh 'kubectl apply -f service.yaml'
                 }
