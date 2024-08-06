@@ -12,7 +12,8 @@ spec:
   serviceAccountName: jenkins-sa
   containers:
   - name: jnlp
-    image: us-central1-docker.pkg.dev/pod-x-harkirat-singh/jenkins/jenkins-slave:v5
+    image: us-central1-docker.pkg.dev/pod-x-harkirat-singh/jenkins/jenkins-slave:v6
+    imagePullPolicy: Always
     args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
     volumeMounts:
     - name: docker-socket
