@@ -36,11 +36,19 @@ agent{
         stage("Application Deployment on Google Kubernetes Engine"){
             steps{
                 script{
+                    sh 'sed -i "s|${batman}:${BUILD_NUMBER}|g" deployment.yaml'
                     sh "gcloud container clusters get-credentials primary --zone ${env.ZONE} --project ${env.PROJECT_ID}"
                     sh 'kubectl apply -f deployment.yaml'
                     sh 'kubectl apply -f service.yaml'
                 }
             }
+        }
+        stage("Update deployment file again"){
+            steps{
+                script{
+                    sh 'sed -i "s|${BUILD_NUMBER}:${batman}|g" deployment.yaml'
+                }
+            } 
         }
     }
     }
