@@ -7,7 +7,6 @@ metadata:
     app: hello
     tier: web
 spec:
-  type: LoadBalancer
   ports:
   - port: 80
     targetPort: 8080
