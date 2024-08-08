@@ -13,6 +13,8 @@ spec:
   containers:
   - name: jnlp
     image: us-central1-docker.pkg.dev/pod-x-harkirat-singh/jenkins/jenkins-slave:v6
+    securityContext:
+      runAsUser: 0
     imagePullPolicy: Always
     args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
     volumeMounts:
