@@ -1,0 +1,85 @@
+pipeline {
+    agent {
+        kubernetes {
+            cloud 'jenkins-gke'
+            yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: agent-harkirat
+spec:
+  serviceAccountName: jenkins-sa
+  containers:
+  - name: jnlp
+    image: us-central1-docker.pkg.dev/pod-x-harkirat-singh/jenkins/jenkins-slave:v6
+    securityContext:
+      runAsUser: 0
+    imagePullPolicy: Always
+    args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+    - name: gcloud-config
+      mountPath: /root/.config
+  volumes:
+  - name: docker-socket
+    hostPath:
+      path: /var/run/docker.sock
+      type: Socket
+  - name: gcloud-config
+    emptyDir: {}
+"""
+        }
+    }
+    environment {
+        ZAP_SERVICE_URL = "http://zap.jenkins.svc.cluster.local:8080"  // ZAP service URL
+        TARGET_URL = "http://juice-shop.herokuapp.com"  // URL to scan
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/main']],
+                          userRemoteConfigs: [[url: 'https://github.com/Harkirat30/jenkins-master-slave.git']]])
+            }
+        }
+
+        stage('Wait for ZAP Service') {
+            steps {
+                script {
+                    // Wait to ensure ZAP service is up and running
+                    sh 'sleep 30'
+                }
+            }
+        }
+
+        stage('Run ZAP Scan') {
+            steps {
+                script {
+                    // Start ZAP scan using the ZAP API
+                    sh """
+                    echo "Starting ZAP scan on ${env.TARGET_URL}..."
+                    curl -X POST "${env.ZAP_SERVICE_URL}/JSON/ascan/action/scan/?url=${env.TARGET_URL}&recurse=true&inScopeOnly=false&scanPolicyName=&maxDepth=&maxChildren=&contextName=&subtreeOnly=false" -o scan-response.json
+                    """
+                    // Wait for scan to complete (adjust time as needed)
+                    sh 'sleep 60'
+                }
+            }
+        }
+
+        stage('Generate Report') {
+            steps {
+                script {
+                    // Generate HTML report using ZAP API
+                    sh """
+                    echo "Generating ZAP report..."
+                    curl -o zap-report.html "${env.ZAP_SERVICE_URL}/OTHER/core/other/htmlreport/?baseurl=${env.TARGET_URL}"
+                    """
+                    // Archive the report as an artifact
+                    archiveArtifacts artifacts: 'zap-report.html', allowEmptyArchive: true
+                }
+            }
+        }
+    }
+}
