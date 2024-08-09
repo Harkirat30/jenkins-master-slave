@@ -32,9 +32,10 @@ spec:
 """
         }
     }
-      environment {
-        ZAP_URL = "http://zap.jenkins.svc.cluster.local"  // ZAP service URL
-        TARGET_URL = "http://juice-shop.herokuapp.com"  // URL to scan
+    environment {
+        ZAP_HOST = "zap.jenkins.svc.cluster.local"
+        ZAP_PORT = "8080"
+        TARGET_URL = "http://10.52.5.205"  // URL to scan
     }
     stages {
         stage('Checkout') {
@@ -57,21 +58,12 @@ spec:
         stage('Run ZAP Scan') {
             steps {
                 script {
-                    // Open the target URL in ZAP
+                    // Run the ZAP CLI scan
                     sh """
-                    echo "Opening target URL in ZAP..."
-                    export ZAP_URL=${env.ZAP_URL}
-                    zap-cli open-url ${env.TARGET_URL}
+                    echo "Running ZAP scan on ${env.TARGET_URL}..."
+                    zap-cli --zap-url=http://\$ZAP_HOST --port=\$ZAP_PORT open-url ${env.TARGET_URL}
+                    zap-cli --zap-url=http://\$ZAP_HOST --port=\$ZAP_PORT active-scan ${env.TARGET_URL}
                     """
-                    
-                    // Run the active scan
-                    sh """
-                    echo "Running active scan..."
-                    zap-cli active-scan ${env.TARGET_URL}
-                    """
-                    
-                    // Wait for scan to complete (adjust time as needed)
-                    sh 'sleep 60'
                 }
             }
         }
@@ -79,10 +71,10 @@ spec:
         stage('Generate Report') {
             steps {
                 script {
-                    // Generate HTML report using ZAP API
+                    // Generate HTML report using ZAP CLI
                     sh """
                     echo "Generating ZAP report..."
-                    curl -o zap-report.html "${env.ZAP_URL}/OTHER/core/other/htmlreport/?baseurl=${env.TARGET_URL}"
+                    zap-cli --zap-url=http://\$ZAP_HOST --port=\$ZAP_PORT report -o zap-report.html -f html
                     """
                     // Archive the report as an artifact
                     archiveArtifacts artifacts: 'zap-report.html', allowEmptyArchive: true
