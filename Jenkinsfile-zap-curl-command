@@ -34,7 +34,7 @@ spec:
     }
     environment {
         ZAP_SERVICE_URL = "http://zap.jenkins.svc.cluster.local:8080"  // ZAP service URL
-        TARGET_URL = "http://juice-shop.herokuapp.com"  // URL to scan
+        TARGET_URL = "http://10.52.5.205"  // URL to scan
     }
     stages {
         stage('Checkout') {
@@ -57,10 +57,15 @@ spec:
         stage('Run ZAP Scan') {
             steps {
                 script {
-                    // Start ZAP scan using the ZAP API
+                    // Open the target URL in ZAP
                     sh """
-                    echo "Starting ZAP scan on ${env.TARGET_URL}..."
-                    curl -X POST "${env.ZAP_SERVICE_URL}/JSON/ascan/action/scan/?url=${env.TARGET_URL}&recurse=true&inScopeOnly=false&scanPolicyName=&maxDepth=&maxChildren=&contextName=&subtreeOnly=false" -o scan-response.json
+                    echo "Opening URL ${env.TARGET_URL} in ZAP..."
+                    curl -X GET "${env.ZAP_SERVICE_URL}/JSON/core/action/accessUrl/?url=${env.TARGET_URL}"
+                    """
+                    // Start the active scan
+                    sh """
+                    echo "Starting ZAP active scan on ${env.TARGET_URL}..."
+                    curl -X POST "${env.ZAP_SERVICE_URL}/JSON/ascan/action/scan/?url=${env.TARGET_URL}&recurse=true"
                     """
                     // Wait for scan to complete (adjust time as needed)
                     sh 'sleep 60'
