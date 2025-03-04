@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zap
+  namespace: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zap
+  template:
+    metadata:
+      labels:
+        app: zap
+    spec:
+      containers:
+      - name: zap
+        image: zaproxy/zap-stable:latest
+        args: ["zap.sh", "-daemon", "-host", "0.0.0.0", "-port", "8080", "-config", "api.disablekey=true", "-config", "api.addrs.addr.name=.*", "-config", "api.addrs.addr.regex=true"]
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: zap-data
+          mountPath: /home/zap/.ZAP
+      volumes:
+      - name: zap-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zap
+  namespace: jenkins
+spec:
+  selector:
+    app: zap
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
